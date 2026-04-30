@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quel joueur de squash es-tu ?</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f3;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    .header { margin-bottom: 2rem; }
+    .header h1 { font-size: 22px; font-weight: 600; color: #111; margin-bottom: 4px; }
+    .header p { font-size: 14px; color: #888; }
+
+    .progress-bar-bg { height: 4px; background: #eee; border-radius: 4px; margin-bottom: 2rem; }
+    .progress-bar-fill { height: 4px; background: #1D9E75; border-radius: 4px; transition: width 0.4s ease; }
+
+    .q-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+    .q-text { font-size: 20px; font-weight: 600; color: #111; margin-bottom: 1.5rem; line-height: 1.4; }
+
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .opt-btn {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      text-align: left;
+      cursor: pointer;
+      font-size: 15px;
+      color: #222;
+      transition: border-color 0.2s, background 0.2s;
+      line-height: 1.4;
+    }
+    .opt-btn:hover { background: #f9f9f9; border-color: #1D9E75; }
+    .opt-btn.selected { border-color: #1D9E75; background: #E1F5EE; color: #085041; font-weight: 500; }
+
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
+    .btn-next {
+      background: #1D9E75; color: white; border: none;
+      border-radius: 8px; padding: 11px 24px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+      opacity: 0.4; transition: opacity 0.2s;
+    }
+    .btn-next.active { opacity: 1; }
+    .btn-next.active:hover { background: #0F6E56; }
+    .btn-back {
+      background: transparent; border: 1px solid #e0e0e0;
+      border-radius: 8px; padding: 11px 16px;
+      font-size: 14px; color: #888; cursor: pointer;
+    }
+    .btn-back:hover { background: #f5f5f5; }
+    .step-indicator { font-size: 13px; color: #bbb; }
+
+    /* Result */
+    .result-title { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+    .style-badge {
+      display: inline-block; padding: 6px 18px;
+      border-radius: 99px; font-size: 15px; font-weight: 500; margin-bottom: 1.5rem;
+    }
+    .style-desc-card { background: #f9f9f7; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+    .style-desc-title { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 4px; }
+    .style-desc-text { font-size: 14px; color: #666; line-height: 1.6; }
+
+    .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+    .players-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+    .player-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1rem 1.25rem; }
+    .player-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 600; margin-bottom: 10px;
+    }
+    .player-gender { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+    .player-name { font-size: 16px; font-weight: 600; color: #111; margin-bottom: 2px; }
+    .player-country { font-size: 13px; color: #999; margin-bottom: 10px; }
+    .match-pct { font-size: 26px; font-weight: 600; }
+    .match-label { font-size: 12px; color: #999; }
+    .pct-bar-bg { height: 4px; background: #eee; border-radius: 4px; margin-top: 8px; }
+    .pct-bar-fill { height: 4px; border-radius: 4px; }
+
+    .style-bars { margin-bottom: 1.5rem; }
+    .style-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .style-bar-label { width: 80px; font-size: 13px; color: #888; }
+    .style-bar-bg { flex: 1; height: 6px; background: #eee; border-radius: 4px; }
+    .style-bar-fill { height: 6px; border-radius: 4px; }
+    .style-bar-val { width: 36px; text-align: right; font-size: 13px; font-weight: 500; }
+
+    .btn-restart {
+      background: transparent; border: 1px solid #e0e0e0;
+      border-radius: 8px; padding: 10px 20px;
+      font-size: 14px; color: #888; cursor: pointer;
+    }
+    .btn-restart:hover { background: #f5f5f5; }
+
+    @media (max-width: 480px) {
+      .card { padding: 1.5rem 1rem; }
+      .q-text { font-size: 18px; }
+      .players-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>Quel joueur de squash es-tu ?</h1>
+    <p>8 questions pour découvrir ton style de jeu et ton joueur de référence.</p>
+  </div>
+
+  <div id="quiz-screen">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress" style="width:12.5%"></div></div>
+    <div class="q-label" id="q-label">Question 1 / 8</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="options" id="options"></div>
+    <div class="nav">
+      <button class="btn-back" id="btn-back" onclick="goBack()">← Retour</button>
+      <span class="step-indicator" id="step-ind">1 / 8</span>
+      <button class="btn-next" id="btn-next" onclick="goNext()">Suivant →</button>
+    </div>
+  </div>
+
+  <div id="result-screen" style="display:none;"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    text: "Sur le court, où te sens-tu le plus à l'aise ?",
+    options: [
+      { text: "Au fond, je contrôle depuis la T", style: { D:3, Po:2, Pr:1, A:0 } },
+      { text: "Au centre, je gère les angles", style: { Po:3, Pr:2, D:1, A:0 } },
+      { text: "À mi-court, prêt à attaquer", style: { A:3, Pr:2, Po:1, D:0 } },
+      { text: "Partout — je dicte le rythme", style: { Pr:3, A:2, Po:1, D:0 } }
+    ]
+  },
+  {
+    text: "Ton coup préféré en match ?",
+    options: [
+      { text: "Le lob — j'envoie mon adversaire au fond", style: { D:3, Po:2, Pr:1, A:0 } },
+      { text: "Le drop shot — court et précis", style: { A:3, Po:2, Pr:1, D:0 } },
+      { text: "Le drive long — je pousse, je pousse", style: { Pr:3, D:2, Po:1, A:0 } },
+      { text: "Le nick — j'en termine vite", style: { A:3, Pr:2, D:0, Po:1 } }
+    ]
+  },
+  {
+    text: "Ton adversaire est en difficulté. Tu fais quoi ?",
+    options: [
+      { text: "Je continue mon plan, patient", style: { D:3, Po:3, Pr:1, A:0 } },
+      { text: "J'accélère immédiatement", style: { A:3, Pr:2, D:0, Po:1 } },
+      { text: "Je varie pour le déstabiliser encore plus", style: { Pr:3, A:2, Po:2, D:0 } },
+      { text: "Je monte au filet pour conclure", style: { A:3, Pr:1, Po:1, D:0 } }
+    ]
+  },
+  {
+    text: "Un échange dure 20 coups. Tu ressens quoi ?",
+    options: [
+      { text: "Du plaisir — c'est là que je gagne", style: { D:3, Po:2, Pr:2, A:0 } },
+      { text: "De la frustration — j'aurais dû finir avant", style: { A:3, Pr:2, Po:0, D:0 } },
+      { text: "De la concentration — je cherche l'ouverture", style: { Po:3, Pr:2, D:1, A:1 } },
+      { text: "Je suis dans ma zone — je peux tenir longtemps", style: { Pr:3, D:2, Po:2, A:0 } }
+    ]
+  },
+  {
+    text: "Tu es mené 1-2 dans le match. Comment tu réagis ?",
+    options: [
+      { text: "Je reviens à mes fondamentaux et je suis patient", style: { D:3, Po:2, Pr:1, A:0 } },
+      { text: "J'augmente l'intensité physique", style: { Pr:3, D:1, Po:1, A:2 } },
+      { text: "Je change de tactique radicalement", style: { A:3, Pr:2, Po:1, D:0 } },
+      { text: "Je joue court pour forcer les erreurs", style: { Po:3, A:2, Pr:1, D:1 } }
+    ]
+  },
+  {
+    text: "Quelle est ton arme principale ?",
+    options: [
+      { text: "Mon physique — je cours tout", style: { D:3, Pr:2, Po:1, A:0 } },
+      { text: "Mes mains — toucher et précision", style: { A:3, Po:2, Pr:0, D:1 } },
+      { text: "Mon cerveau — je lis le jeu en avance", style: { Po:3, Pr:2, D:2, A:1 } },
+      { text: "Mon rythme — je suis imprévisible", style: { Pr:3, A:2, Po:1, D:0 } }
+    ]
+  },
+  {
+    text: "Comment tu te déplaces sur le court ?",
+    options: [
+      { text: "Avec économie — je prends la ligne droite", style: { Po:3, D:2, Pr:1, A:1 } },
+      { text: "Avec explosivité — je sprinte à chaque balle", style: { A:3, Pr:2, D:1, Po:0 } },
+      { text: "Avec constance — je tiens le rythme sur 5 games", style: { D:3, Pr:2, Po:2, A:0 } },
+      { text: "Avec intention — chaque déplacement crée une pression", style: { Pr:3, Po:2, A:1, D:1 } }
+    ]
+  },
+  {
+    text: "10-10 au 5e jeu — qu'est-ce qui se passe dans ta tête ?",
+    options: [
+      { text: "Je ne lâche jamais — je gratte chaque point", style: { D:3, Pr:2, Po:1, A:0 } },
+      { text: "Je cherche le winner, maintenant ou jamais", style: { A:3, Po:2, Pr:1, D:0 } },
+      { text: "Je mets la pression, je le force à la faute", style: { Pr:3, Po:2, A:1, D:1 } },
+      { text: "Je reste dans ma structure et je joue mon jeu", style: { Po:3, D:2, Pr:1, A:1 } }
+    ]
+  }
+];
+
+const styles = {
+  A:  { name: "Attaquant",    color: "#D85A30", bg: "#FAECE7", desc: "Tu cherches le coup gagnant, tu prends des risques calculés. Court et précis, tu essaies de raccourcir les échanges avec des winners et des drops assassins." },
+  D:  { name: "Défenseur",    color: "#185FA5", bg: "#E6F1FB", desc: "Tu es un roc. Ta solidité physique et mentale te permet de récupérer n'importe quelle balle et de transformer les erreurs adverses en victoires." },
+  Pr: { name: "Presseur",     color: "#993556", bg: "#FBEAF0", desc: "Tu mets en difficulté par l'intensité et la vitesse. Ton rythme élevé empêche l'adversaire de s'installer et tu crées les points par l'usure." },
+  Po: { name: "Positionnel",  color: "#0F6E56", bg: "#E1F5EE", desc: "Tu joues aux échecs. Chaque coup est pensé pour te placer au centre et forcer l'adversaire dans les coins. Tu gagnes sur la tactique et l'intelligence." }
+};
+
+const players = {
+  A:  { m: { name: "Ali Farag",           country: "Égypte",            rank: "#1",    initials: "AF" }, f: { name: "Nour El Tayeb",    country: "Égypte", rank: "Top 10", initials: "NT" } },
+  D:  { m: { name: "Mostafa Asal",         country: "Égypte",            rank: "Top 10", initials: "MA" }, f: { name: "Hania El Hammamy", country: "Égypte", rank: "Top 5",  initials: "HH" } },
+  Pr: { m: { name: "Mohamed ElShorbagy",   country: "Égypte",            rank: "Top 10", initials: "ME" }, f: { name: "Nouran Gohar",     country: "Égypte", rank: "#1",    initials: "NG" } },
+  Po: { m: { name: "Paul Coll",            country: "Nouvelle-Zélande",  rank: "Top 5", initials: "PC" }, f: { name: "Nour El Sherbini", country: "Égypte", rank: "Top 3", initials: "NS" } }
+};
+
+let current = 0, answers = [], selected = null;
+
+function render() {
+  const q = questions[current];
+  document.getElementById('q-label').textContent = `Question ${current + 1} / 8`;
+  document.getElementById('step-ind').textContent = `${current + 1} / 8`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('progress').style.width = `${((current + 1) / 8) * 100}%`;
+  document.getElementById('btn-back').style.display = current === 0 ? 'none' : 'inline-block';
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.options.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn' + (selected === i ? ' selected' : '');
+    btn.textContent = o.text;
+    btn.onclick = () => { selected = i; render(); };
+    opts.appendChild(btn);
+  });
+  const nb = document.getElementById('btn-next');
+  nb.textContent = current === 7 ? 'Voir mes résultats →' : 'Suivant →';
+  nb.className = 'btn-next' + (selected !== null ? ' active' : '');
+}
+
+function goNext() {
+  if (selected === null) return;
+  answers[current] = selected;
+  if (current < 7) { current++; selected = answers[current] !== undefined ? answers[current] : null; render(); }
+  else showResult();
+}
+
+function goBack() {
+  if (current > 0) { answers[current] = selected; current--; selected = answers[current] !== undefined ? answers[current] : null; render(); }
+}
+
+function showResult() {
+  const scores = { A:0, D:0, Pr:0, Po:0 };
+  answers.forEach((ans, qi) => { const s = questions[qi].options[ans].style; for (const k in s) scores[k] += s[k]; });
+  const total = Object.values(scores).reduce((a,b) => a+b, 0);
+  const pct = {};
+  for (const k in scores) pct[k] = Math.round((scores[k]/total)*100);
+  const dominant = Object.keys(scores).reduce((a,b) => scores[a]>scores[b]?a:b);
+  const style = styles[dominant];
+  const pm = players[dominant].m, pf = players[dominant].f;
+  const mPct = pct[dominant];
+  const fPct = Math.min(99, mPct - Math.floor(Math.random() * 8));
+
+  document.getElementById('quiz-screen').style.display = 'none';
+  const rs = document.getElementById('result-screen');
+  rs.style.display = 'block';
+  rs.innerHTML = `
+    <div class="result-title">Ton profil de jeu</div>
+    <span class="style-badge" style="background:${style.bg};color:${style.color};">${style.name}</span>
+    <div class="style-desc-card">
+      <div class="style-desc-title">${style.name} — comment tu joues</div>
+      <div class="style-desc-text">${style.desc}</div>
+    </div>
+    <div class="section-label">Tes joueurs de référence</div>
+    <div class="players-grid">
+      ${playerCard(pm, mPct, "Homme", dominant)}
+      ${playerCard(pf, fPct, "Femme", dominant)}
+    </div>
+    <div class="style-bars">
+      <div class="section-label">Répartition de ton style</div>
+      ${styleBar('Attaque', pct.A, '#D85A30')}
+      ${styleBar('Défense', pct.D, '#185FA5')}
+      ${styleBar('Pression', pct.Pr, '#993556')}
+      ${styleBar('Position', pct.Po, '#0F6E56')}
+    </div>
+    <button class="btn-restart" onclick="restart()">↩ Recommencer le quiz</button>
+  `;
+}
+
+function playerCard(p, matchPct, gender, dominant) {
+  const col = styles[dominant].color, bg = styles[dominant].bg;
+  return `<div class="player-card">
+    <div class="player-avatar" style="background:${bg};color:${col};">${p.initials}</div>
+    <div class="player-gender">${gender} · ${p.rank}</div>
+    <div class="player-name">${p.name}</div>
+    <div class="player-country">${p.country}</div>
+    <div class="match-pct" style="color:${col};">${matchPct}%</div>
+    <div class="match-label">de ressemblance</div>
+    <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${matchPct}%;background:${col};"></div></div>
+  </div>`;
+}
+
+function styleBar(label, val, color) {
+  return `<div class="style-bar-row">
+    <div class="style-bar-label">${label}</div>
+    <div class="style-bar-bg"><div class="style-bar-fill" style="width:${val}%;background:${color};"></div></div>
+    <div class="style-bar-val" style="color:${color};">${val}%</div>
+  </div>`;
+}
+
+function restart() {
+  current = 0; answers = []; selected = null;
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
